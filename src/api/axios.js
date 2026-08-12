@@ -2,7 +2,8 @@ import axios from 'axios'
 
 // Central axios instance for the whole app.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: //import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    'https://university-management-system-one-topaz.vercel.app/api',
 })
 
 // Attach the JWT (saved at login) to every request.
