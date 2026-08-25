@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
 const hasEmailConfig = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
 const transporter = hasEmailConfig
@@ -14,8 +14,8 @@ const transporter = hasEmailConfig
         pass: process.env.EMAIL_PASS,
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+      },
     })
   : null;
 
@@ -29,11 +29,11 @@ async function maybeSendMail(opts) {
     console.log('----------------------------------------------------------------');
     return;
   }
-  try { 
-    await transporter.sendMail({ from: SENDER, ...opts }); 
+  try {
+    await transporter.sendMail({ from: SENDER, ...opts });
     console.log('--- EMAIL SENT SUCCESSFULLY ---');
-  } catch (error) { 
-    console.error('--- DETAILED EMAIL ERROR ---', error); 
+  } catch (error) {
+    console.error('--- DETAILED EMAIL ERROR ---', error);
   }
 }
 
