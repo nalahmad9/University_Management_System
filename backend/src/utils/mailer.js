@@ -1,15 +1,15 @@
 import nodemailer from 'nodemailer';
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT) || 465;
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
 const hasEmailConfig = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
 const transporter = hasEmailConfig
   ? nodemailer.createTransport({
       host: SMTP_HOST,
       port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      family: 4, // <-- FORCES NODEMAILER TO USE IPV4 ONLY (FIXES ENETUNREACH ON RENDER)
+      secure: false, // Set false for port 587 (uses STARTTLS)
+      family: 4,     // Forces IPv4 to prevent IPv6 network unreachable errors on Render
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
