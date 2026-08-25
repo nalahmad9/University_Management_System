@@ -2,36 +2,41 @@ import nodemailer from 'nodemailer';
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-const hasEmailConfig = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
-const transporter = hasEmailConfig
-  ? nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: false, // Set false for port 587 (uses STARTTLS)
-      family: 4,     // Forces IPv4 to prevent IPv6 network unreachable errors on Render
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    })
-  : null;
+function getTransporter() {
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
 
-const SENDER = hasEmailConfig ? `"UniHub" <${process.env.EMAIL_USER}>` : null;
+  if (!user || !pass) return null;
+
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: false, // Uses STARTTLS for port 587
+    family: 4,     // Forces IPv4 on Render
+    auth: { user, pass },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+}
 
 async function maybeSendMail(opts) {
+  const transporter = getTransporter();
+
   if (!transporter) {
-    console.log('--- EMAIL (not sent — configure EMAIL_USER/EMAIL_PASS env vars) ---');
+    console.log('--- EMAIL (not sent — EMAIL_USER or EMAIL_PASS missing at runtime) ---');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'PRESENT' : 'MISSING');
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'PRESENT' : 'MISSING');
     console.log('To:', opts.to);
     console.log('Subject:', opts.subject);
     console.log('----------------------------------------------------------------');
     return;
   }
+
   try {
-    await transporter.sendMail({ from: SENDER, ...opts });
+    const sender = `"UniHub" <${process.env.EMAIL_USER}>`;
+    await transporter.sendMail({ from: sender, ...opts });
     console.log('--- EMAIL SENT SUCCESSFULLY ---');
   } catch (error) {
     console.error('--- DETAILED EMAIL ERROR ---', error);
