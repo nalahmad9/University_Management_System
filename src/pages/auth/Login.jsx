@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, GraduationCap } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, GraduationCap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 
@@ -33,11 +33,11 @@ export default function Login() {
 
   useEffect(() => { setVisible(true) }, [])
 
-  const doLogin = async (email, password) => {
+  const doLogin = async (identifier, password) => {
     setError('')
     setLoading(true)
     try {
-      const user = await login(email, password);
+      const user = await login(identifier, password);
       setLoading(false);
       toast(`Welcome back, ${user.firstName}!`, 'success');
       navigate(`/${user.role}/dashboard`, { replace: true });

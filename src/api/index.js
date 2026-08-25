@@ -1,11 +1,13 @@
-// Mahmoud (Team Lead) — API service layer. Each page has its own endpoint.
 import client from './client'
 export { client }
 
 // ----- Auth -----
 export const authApi = {
   login: (email, password) => client.post('/auth/login', { email, password }).then((r) => r.data),
-  updateProfile: (data) => client.patch('/auth/profile', data).then((r) => r.data),
+  requestAccount: (data) => client.post('/auth/request-account', data).then((r) => r.data),
+  getMe: () => client.get('/auth/me').then((r) => r.data),
+  updateProfile: (data) => client.patch('/auth/me', data).then((r) => r.data),
+  changePassword: (currentPassword, newPassword) => client.patch('/auth/password', { currentPassword, newPassword }).then((r) => r.data),
 }
 
 // ----- Student API (all under /api/student) -----

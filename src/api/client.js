@@ -1,14 +1,24 @@
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://university-management-system-one-topaz.vercel.app/api'
-const client = axios.create({ baseURL: API_BASE })
+// Ensure local development uses localhost:5000
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('ums_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
+const client = axios.create({ 
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
+
+client.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('ums_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
 
 export default client

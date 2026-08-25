@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import axios from 'axios'
-import api from '../api/axios'
+import { authApi } from '../api'
 
 const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
@@ -24,8 +23,9 @@ export function AuthProvider({ children }) {
     const savedUser = localStorage.getItem(USER_KEY)
     const savedToken = localStorage.getItem(TOKEN_KEY)
     if (savedUser && savedToken) {
-      try { setCurrentUser(JSON.parse(savedUser)) }
-      catch {
+      try { 
+        setCurrentUser(JSON.parse(savedUser)) 
+      } catch {
         localStorage.removeItem(USER_KEY)
         localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem(STORAGE_KEY)
@@ -35,11 +35,12 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = useCallback(async (email, password) => {
-    const response = await axios.post('http://localhost:5000/api/auth/login', { email, password })
-    if (response.data && response.data.user) {
-      const { user, token } = response.data
+    const data = await authApi.login(email, password)
+    if (data && data.user) {
+      const { user, token } = data
       if (user.status === 'pending') throw new Error('Your account is pending activation by an administrator.')
       if (user.status === 'inactive') throw new Error('Your account is inactive. Please contact the administrator.')
+      
       const u = normalize(user)
       setCurrentUser(u)
       localStorage.setItem(STORAGE_KEY, u.id)
@@ -58,7 +59,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const updateProfile = useCallback(async (patch) => {
-    const { data } = await api.patch('/auth/me', patch)
+    const data = await authApi.updateProfile(patch)
     const u = normalize(data.user)
     setCurrentUser(u)
     localStorage.setItem(USER_KEY, JSON.stringify(u))
@@ -66,7 +67,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const changePassword = useCallback(async (currentPassword, newPassword) => {
-    await api.patch('/auth/password', { currentPassword, newPassword })
+    await authApi.changePassword(currentPassword, newPassword)
   }, [])
 
   return (

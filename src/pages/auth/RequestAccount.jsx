@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useParams, Navigate, useNavigate } from 'react-router-dom'
 import { Mail, Sparkles, ArrowRight } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
-import axios from 'axios'
+import { authApi } from '../../api'
 
 const ROLE_LABELS = {
   student: 'Student',
@@ -35,14 +35,14 @@ export default function RequestAccount() {
     setError('')
     setLoading(true)
     try {
-      await axios.post('http://localhost:5000/api/auth/request-account', {
+      await authApi.requestAccount({
         ...formData,
         role
       })
       toast('Request submitted successfully! Pending admin review.', 'success')
       navigate('/login', { replace: true })
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong.')
+      setError(err.response?.data?.message || err.message || 'Something went wrong.')
     } finally {
       setLoading(false)
     }
