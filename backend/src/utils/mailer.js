@@ -1,43 +1,40 @@
-import nodemailer from 'nodemailer';
+// Uses Resend's HTTPS API instead of raw SMTP. Render's free tier blocks
+// outbound traffic on SMTP ports (25/465/587), so nodemailer + Gmail SMTP
+// times out there — this sends over HTTPS instead, which isn't blocked.
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const hasEmailConfig = !!RESEND_API_KEY;
 
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-
-function getTransporter() {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-
-  if (!user || !pass) return null;
-
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: false, // Uses STARTTLS for port 587
-    family: 4,     // Forces IPv4 on Render
-    auth: { user, pass },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-}
+// onboarding@resend.dev works out of the box with no domain setup, but only
+// delivers to the email address you signed up to Resend with. Once you verify
+// your own domain in the Resend dashboard, set EMAIL_FROM to an address on it
+// (e.g. "UniHub <noreply@yourdomain.com>") to send to any recipient.
+const SENDER = process.env.EMAIL_FROM || 'UniHub <onboarding@resend.dev>';
 
 async function maybeSendMail(opts) {
-  const transporter = getTransporter();
-
-  if (!transporter) {
-    console.log('--- EMAIL (not sent — EMAIL_USER or EMAIL_PASS missing at runtime) ---');
-    console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'PRESENT' : 'MISSING');
-    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'PRESENT' : 'MISSING');
+  if (!hasEmailConfig) {
+    console.log('--- EMAIL (not sent — configure RESEND_API_KEY env var) ---');
     console.log('To:', opts.to);
     console.log('Subject:', opts.subject);
     console.log('----------------------------------------------------------------');
     return;
   }
-
   try {
-    const sender = `"UniHub" <${process.env.EMAIL_USER}>`;
-    await transporter.sendMail({ from: sender, ...opts });
-    console.log('--- EMAIL SENT SUCCESSFULLY ---');
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: SENDER,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.message || `Resend API error (${res.status})`);
+    console.log('--- EMAIL SENT SUCCESSFULLY ---', data.id);
   } catch (error) {
     console.error('--- DETAILED EMAIL ERROR ---', error);
   }
