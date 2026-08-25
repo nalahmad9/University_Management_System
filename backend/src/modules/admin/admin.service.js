@@ -159,18 +159,28 @@ export async function approveRequest(userId, actorId) {
   const email = await findAvailableEmail(user.firstName, user.lastName)
   const tempPassword = generateTempPassword()
 
+  // Hash temporary password for authentication
+  const hashedPassword = await bcrypt.hash(tempPassword, 10)
+
   user.email = email
-  user.password = tempPassword
+  user.password = hashedPassword
   user.status = 'active'
   await user.save()
 
-  await sendCredentialsEmail({
-    to: user.personalEmail,
-    firstName: user.firstName,
-    universityEmail: email,
-    password: tempPassword,
-    role: user.role,
-  })
+  console.log(`[APPROVAL DEBUG] Attempting to send credentials to personalEmail: "${user.personalEmail}"`)
+
+  try {
+    await sendCredentialsEmail({
+      to: user.personalEmail,
+      firstName: user.firstName,
+      universityEmail: email,
+      password: tempPassword,
+      role: user.role,
+    })
+    console.log('[APPROVAL DEBUG] sendCredentialsEmail finished successfully.')
+  } catch (emailErr) {
+    console.error('[APPROVAL DEBUG] sendCredentialsEmail threw an error:', emailErr)
+  }
 
   await Notification.create({
     userId: user._id,

@@ -9,6 +9,7 @@ const transporter = hasEmailConfig
       host: SMTP_HOST,
       port: SMTP_PORT,
       secure: SMTP_PORT === 465,
+      family: 4, // <-- FORCES NODEMAILER TO USE IPV4 ONLY (FIXES ENETUNREACH ON RENDER)
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
