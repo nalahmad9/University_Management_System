@@ -167,11 +167,14 @@ export async function approveRequest(userId, actorId) {
   user.status = 'active'
   await user.save()
 
-  console.log(`[APPROVAL DEBUG] Attempting to send credentials to personalEmail: "${user.personalEmail}"`)
+  // Fallback to user.email if personalEmail is undefined or empty
+  const recipientEmail = user.personalEmail || user.email
+
+  console.log(`[APPROVAL DEBUG] Attempting to send credentials to: "${recipientEmail}"`)
 
   try {
     await sendCredentialsEmail({
-      to: user.personalEmail,
+      to: recipientEmail,
       firstName: user.firstName,
       universityEmail: email,
       password: tempPassword,
